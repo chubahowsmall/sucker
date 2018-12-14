@@ -1,5 +1,6 @@
-# sucker
-Docker Tool
+# sucker  
+
+簡化 Docker 執行參數的工具
 
 
 # Install  
@@ -7,7 +8,7 @@ Docker Tool
 1. Install fire package  
   `pip install fire`
 
-2. Clone sucker   
+2. Clone   
   `$ git clone https://github.com/future/sucker`
 
 3. chmod & copy   
@@ -18,7 +19,13 @@ Docker Tool
 
 # 建立 sucker.ini 設定檔
 
-sucker.ini 設定 container 啟動的各項參數
+sucker.ini 設定 container 啟動的各項參數  
+socker.ini 會依序從
+1. ./socker.ini   
+2. ~/.socker/socker.ini    
+3. /etc/socker.ini  
+
+第一個存在的 socker.ini 作為設定檔
 
 ## [DEFAULT]
 
