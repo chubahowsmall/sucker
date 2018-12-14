@@ -1,0 +1,97 @@
+#!/usr/bin/python3
+import fire
+import os
+import configparser
+
+def replace_key(dt, k, nk):
+    dt[nk] = dt[k]
+    dt.pop(k)
+
+def config_dict(conf):
+    conf_d = {}
+    for k,v in conf.items():
+        conf_d[k] = v
+
+    return conf_d
+
+def conf_path():
+    conf_dir = "./sucker.ini"
+    conf_home = os.path.expanduser("~/.sucker/sucker.ini")
+    conf_etc = os.path.expanduser("/etc/sucker.ini")
+
+    conf_path = [conf_dir, conf_home, conf_etc]
+
+    config_path = ''
+    for f in conf_path:
+        if os.path.isfile(f):
+            config_path = f
+            break
+
+    return config_path
+
+
+
+def run(prog, *args, **kwargs):
+    pwd = os.getcwd()
+    conf = configparser.ConfigParser()
+    conf.read(conf_path())
+    image = conf[prog]['image']
+    program = conf[prog].get('program', fallback='bash')
+    workdir = conf[prog].get('workdir', fallback='/opt')
+
+    rm = conf[prog].getboolean('rm', fallback=True)
+    stdin = conf[prog].getboolean('stdin', fallback=True)
+    tty = conf[prog].getboolean('tty', fallback=True)
+    detach = conf[prog].getboolean('detach', fallback=False)
+
+    conf_dict = config_dict(conf[prog])
+
+    cmd = 'docker run '
+
+    if stdin :
+        cmd += '-i '
+    conf_dict.pop('stdin')
+    if tty :
+        cmd += '-t '
+    conf_dict.pop('tty')
+    if detach :
+        cmd += '-d '
+    conf_dict.pop('detach')
+    if rm :
+        cmd += '--rm '
+    conf_dict.pop('rm')
+
+    cmd += f'-w {workdir} -v {pwd}:{workdir}:Z '
+    conf_dict.pop('workdir')
+    conf_dict.pop('image')
+    conf_dict.pop('program')
+
+    for k, v in conf_dict.items():
+
+        k = k.split('#')[0]
+
+        if k == 'port':
+            cmd += f'-p {v} '
+            continue
+
+        if len(k) == 1:
+            cmd += f'-{k} {v} '
+            continue
+
+        if len(k) > 1:
+            cmd += f'--{k}={v} '
+
+    cmd += f'{image} {program} '
+
+    for i in args:
+        cmd += i+' '
+    for k, v in kwargs.items():
+        cmd += f'--{k}={v} '
+
+    print(f'RUN:\n{cmd}')
+    os.system(cmd)
+
+
+
+if __name__ == '__main__':
+    fire.Fire(run)
